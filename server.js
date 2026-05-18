@@ -1,11 +1,12 @@
 const express = require('express');
 const fs = require('fs');
+const path = require('path');
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const SLOT = process.env.SLOT || 'unknown';
 const APP_NAME = process.env.APP_NAME || 'app';
 
-const htmlTemplate = fs.readFileSync('./index_ku.html', 'utf-8');
+const htmlTemplate = fs.readFileSync(path.join(__dirname, 'index_ku.html'), 'utf-8');
 
 app.get('/health', (_req, res) => res.type('text/plain').send('OK'));
 app.get('/slot',   (_req, res) => res.type('text/plain').send(SLOT));
