@@ -1,10 +1,14 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
+try { process.loadEnvFile(path.join(__dirname, '.env')); } catch { /* .env belum dibuat server */ }
+
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
 const SLOT = process.env.SLOT || 'unknown';
 const APP_NAME = process.env.APP_NAME || 'app';
+const LIVE_IN = process.env.live_in || 'unknown';
 
 const TEMPLATE_PATH = path.join(__dirname, 'index_ku.html');
 
@@ -14,6 +18,7 @@ app.get('/', (_req, res) => {
   const html = fs.readFileSync(TEMPLATE_PATH, 'utf8')
     .replace(/{{APP_NAME}}/g, APP_NAME)
     .replace(/{{SLOT}}/g, SLOT)
+    .replace(/{{LIVE_IN}}/g, LIVE_IN)
     .replace(/{{BORDER_COLOR}}/g, SLOT === 'green' ? '#2e7d32' : '#1565c0')
     .replace(/{{SLOT_COLOR}}/g, SLOT === 'green' ? '#66bb6a' : '#42a5f5');
   res.type('html').send(html);
