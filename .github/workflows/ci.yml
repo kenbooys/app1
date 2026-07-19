@@ -1,0 +1,90 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [master, main]
+    tags:
+      - 'v*.*.*.staging'
+      - 'v*.*.*-staging'
+      - 'v*.*.*.prod'
+      - 'v*.*.*-prod'
+
+jobs:
+  # ============================================================
+  # CI GATE (dummy, success scenario)
+  # Jalan saat: merge/push ke master|main, atau tag *staging
+  # Skip saat : tag *prod
+  # ============================================================
+  ci-gate:
+    name: ci-gate (dummy)
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'branch' || contains(github.ref_name, 'staging')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dummy gate - lint
+        run: echo "[dummy] lint OK"
+
+      - name: Dummy gate - test
+        run: echo "[dummy] test OK"
+
+      - name: Dummy gate - build
+        run: echo "[dummy] build OK (success scenario)"
+
+  # ============================================================
+  # DEPLOY STAGING [ssh-staging]
+  # Jalan saat: tag *staging (setelah ci-gate sukses)
+  # Skip saat : push branch, tag *prod
+  # ============================================================
+  ssh-staging:
+    name: remote [ssh-staging]
+    runs-on: ubuntu-latest
+    needs: ci-gate
+    if: github.ref_type == 'tag' && contains(github.ref_name, 'staging')
+    steps:
+      - name: Deploy ke staging (dummy)
+        run: |
+          echo "[dummy] ssh ke server STAGING..."
+          echo "[dummy] deploy tag ${{ github.ref_name }} ke STAGING"
+          echo "[dummy] restart service staging OK"
+      # Nanti kalau sudah siap SSH beneran, ganti step di atas dengan:
+      # - name: Deploy ke staging via SSH
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.STAGING_SSH_HOST }}
+      #     username: ${{ secrets.STAGING_SSH_USER }}
+      #     key: ${{ secrets.STAGING_SSH_KEY }}
+      #     script: |
+      #       cd /var/www/app1
+      #       git fetch --tags && git checkout ${{ github.ref_name }}
+      #       npm ci --omit=dev
+      #       pm2 restart app1-staging
+
+  # ============================================================
+  # DEPLOY PRODUCTION [ssh-production]
+  # Jalan saat: tag *prod (langsung, tanpa ci-gate)
+  # Skip saat : push branch, tag *staging
+  # ============================================================
+  ssh-production:
+    name: remote [ssh-production]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' && contains(github.ref_name, 'prod')
+    steps:
+      - name: Deploy ke production (dummy)
+        run: |
+          echo "[dummy] ssh ke server PRODUCTION..."
+          echo "[dummy] deploy tag ${{ github.ref_name }} ke PRODUCTION"
+          echo "[dummy] restart service production OK"
+      # Nanti kalau sudah siap SSH beneran, ganti step di atas dengan:
+      # - name: Deploy ke production via SSH
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.PROD_SSH_HOST }}
+      #     username: ${{ secrets.PROD_SSH_USER }}
+      #     key: ${{ secrets.PROD_SSH_KEY }}
+      #     script: |
+      #       cd /var/www/app1
+      #       git fetch --tags && git checkout ${{ github.ref_name }}
+      #       npm ci --omit=dev
+      #       pm2 restart app1-production
