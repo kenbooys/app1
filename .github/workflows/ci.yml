@@ -1,6 +1,8 @@
 name: CI/CD
 
 on:
+  pull_request:
+    branches: [master, main]
   push:
     branches: [master, main]
     tags:
@@ -12,13 +14,14 @@ on:
 jobs:
   # ============================================================
   # CI GATE (dummy, success scenario)
-  # Jalan saat: merge/push ke master|main, atau tag *staging
-  # Skip saat : tag *prod
+  # Jalan saat: pull request ke master|main, merge/push ke
+  #             master|main, atau push tag *staging
+  # Skip saat : push tag *prod
   # ============================================================
   ci-gate:
     name: ci-gate (dummy)
     runs-on: ubuntu-latest
-    if: github.ref_type == 'branch' || contains(github.ref_name, 'staging')
+    if: github.event_name == 'pull_request' || github.ref_type == 'branch' || contains(github.ref_name, 'staging')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,12 +36,12 @@ jobs:
         run: echo "[dummy] build OK (success scenario)"
 
   # ============================================================
-  # DEPLOY STAGING [ssh-staging]
-  # Jalan saat: tag *staging (setelah ci-gate sukses)
-  # Skip saat : push branch, tag *prod
+  # DEPLOY STAGING [create-staging]
+  # Jalan saat: push tag *staging (setelah ci-gate sukses)
+  # Skip saat : pull request, push branch, push tag *prod
   # ============================================================
-  ssh-staging:
-    name: remote [ssh-staging]
+  create-staging:
+    name: Deploy Staging Server
     runs-on: ubuntu-latest
     needs: ci-gate
     if: github.ref_type == 'tag' && contains(github.ref_name, 'staging')
@@ -62,22 +65,50 @@ jobs:
       #       pm2 restart app1-staging
 
   # ============================================================
-  # DEPLOY PRODUCTION [ssh-production]
-  # Jalan saat: tag *prod (langsung, tanpa ci-gate)
-  # Skip saat : push branch, tag *staging
+  # CREATE REGISTRY PROD [create-registry-prod]
+  # Jalan saat: push tag *staging (setelah create-staging sukses)
+  # Skip saat : pull request, push branch, push tag *prod
   # ============================================================
-  ssh-production:
-    name: remote [ssh-production]
+  create-registry-prod:
+    name: Create Registry Production (dummy)
+    runs-on: ubuntu-latest
+    needs: create-staging
+    if: github.ref_type == 'tag' && contains(github.ref_name, 'staging')
+    steps:
+      - name: Create registry production (dummy)
+        run: |
+          echo "[dummy] build image production dari tag ${{ github.ref_name }}"
+          echo "[dummy] push image ke registry production OK"
+      # Nanti ganti dengan langkah build & push image sebenarnya, contoh:
+      # - name: Login registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ secrets.REGISTRY_URL }}
+      #     username: ${{ secrets.REGISTRY_USER }}
+      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+      # - name: Build & push
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     push: true
+      #     tags: ${{ secrets.REGISTRY_URL }}/app1:${{ github.ref_name }}
+
+  # ============================================================
+  # PUBLISH PRODUCTION [publish-production]
+  # Jalan saat: push tag *prod (langsung, tanpa ci-gate)
+  # Skip saat : pull request, push branch, push tag *staging
+  # ============================================================
+  publish-production:
+    name: Publish Production (dummy)
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' && contains(github.ref_name, 'prod')
     steps:
-      - name: Deploy ke production (dummy)
+      - name: Publish ke production (dummy)
         run: |
           echo "[dummy] ssh ke server PRODUCTION..."
-          echo "[dummy] deploy tag ${{ github.ref_name }} ke PRODUCTION"
+          echo "[dummy] publish tag ${{ github.ref_name }} ke PRODUCTION"
           echo "[dummy] restart service production OK"
       # Nanti kalau sudah siap SSH beneran, ganti step di atas dengan:
-      # - name: Deploy ke production via SSH
+      # - name: Publish ke production via SSH
       #   uses: appleboy/ssh-action@v1.0.3
       #   with:
       #     host: ${{ secrets.PROD_SSH_HOST }}
