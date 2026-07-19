@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   pull_request:
-    branches: [master, main]
+    branches: [master-dummy]
   push:
-    branches: [master, main]
+    branches: [master-dummy]
     tags:
       - 'v*.*.*.staging'
       - 'v*.*.*-staging'
@@ -51,18 +51,16 @@ jobs:
           echo "[dummy] ssh ke server STAGING..."
           echo "[dummy] deploy tag ${{ github.ref_name }} ke STAGING"
           echo "[dummy] restart service staging OK"
-      # Nanti kalau sudah siap SSH beneran, ganti step di atas dengan:
+      # Nanti kalau SSH sudah siap, ganti step di atas dengan:
       # - name: Deploy ke staging via SSH
       #   uses: appleboy/ssh-action@v1.0.3
       #   with:
       #     host: ${{ secrets.STAGING_SSH_HOST }}
       #     username: ${{ secrets.STAGING_SSH_USER }}
       #     key: ${{ secrets.STAGING_SSH_KEY }}
+      #     port: ${{ secrets.STAGING_SSH_PORT || 22 }}
       #     script: |
-      #       cd /var/www/app1
-      #       git fetch --tags && git checkout ${{ github.ref_name }}
-      #       npm ci --omit=dev
-      #       pm2 restart app1-staging
+      #       cd /exmaple_path && ./main.sh make_build ${{ github.ref_name }}
 
   # ============================================================
   # CREATE REGISTRY PROD [create-registry-prod]
@@ -77,20 +75,19 @@ jobs:
     steps:
       - name: Create registry production (dummy)
         run: |
-          echo "[dummy] build image production dari tag ${{ github.ref_name }}"
-          echo "[dummy] push image ke registry production OK"
-      # Nanti ganti dengan langkah build & push image sebenarnya, contoh:
-      # - name: Login registry
-      #   uses: docker/login-action@v3
+          echo "[dummy] ssh ke server STAGING..."
+          echo "[dummy] create registry prod dari tag ${{ github.ref_name }}"
+          echo "[dummy] push registry production OK"
+      # Nanti kalau SSH sudah siap, ganti step di atas dengan:
+      # - name: Create registry production via SSH
+      #   uses: appleboy/ssh-action@v1.0.3
       #   with:
-      #     registry: ${{ secrets.REGISTRY_URL }}
-      #     username: ${{ secrets.REGISTRY_USER }}
-      #     password: ${{ secrets.REGISTRY_PASSWORD }}
-      # - name: Build & push
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     push: true
-      #     tags: ${{ secrets.REGISTRY_URL }}/app1:${{ github.ref_name }}
+      #     host: ${{ secrets.STAGING_SSH_HOST }}
+      #     username: ${{ secrets.STAGING_SSH_USER }}
+      #     key: ${{ secrets.STAGING_SSH_KEY }}
+      #     port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+      #     script: |
+      #       cd /exmaple_path && ./main.sh make_build ${{ github.ref_name }}
 
   # ============================================================
   # PUBLISH PRODUCTION [publish-production]
@@ -107,15 +104,13 @@ jobs:
           echo "[dummy] ssh ke server PRODUCTION..."
           echo "[dummy] publish tag ${{ github.ref_name }} ke PRODUCTION"
           echo "[dummy] restart service production OK"
-      # Nanti kalau sudah siap SSH beneran, ganti step di atas dengan:
+      # Nanti kalau SSH sudah siap, ganti step di atas dengan:
       # - name: Publish ke production via SSH
       #   uses: appleboy/ssh-action@v1.0.3
       #   with:
       #     host: ${{ secrets.PROD_SSH_HOST }}
       #     username: ${{ secrets.PROD_SSH_USER }}
       #     key: ${{ secrets.PROD_SSH_KEY }}
+      #     port: ${{ secrets.PROD_SSH_PORT || 22 }}
       #     script: |
-      #       cd /var/www/app1
-      #       git fetch --tags && git checkout ${{ github.ref_name }}
-      #       npm ci --omit=dev
-      #       pm2 restart app1-production
+      #       cd /exmaple_path && ./main.sh make_build ${{ github.ref_name }}
