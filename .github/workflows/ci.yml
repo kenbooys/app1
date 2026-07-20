@@ -6,9 +6,7 @@ on:
   push:
     branches: [master-dummy]
     tags:
-      - 'v*.*.*.staging'
       - 'v*.*.*-staging'
-      - 'v*.*.*.prod'
       - 'v*.*.*-prod'
 
 jobs:
